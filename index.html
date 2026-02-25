@@ -1,75 +1,158 @@
-<script>
-    const URL_API = 'https://script.google.com/macros/s/AKfycbxqZhZ15KIsX3sHcflDZrFHabsa-Jk2aWKkTSeOzdNiq0a5G7sYxVcSiUuh98oqOOdq/exec';
-    let dadosDoMesAtual = []; // Cache na memória
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portal de Consulta - Incentivo</title>
+    <style>
+        :root { --primary: #1a73e8; --bg: #f8f9fa; --text: #202124; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; }
+        .container { background: white; width: 100%; max-width: 450px; padding: 25px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); box-sizing: border-box; }
+        h2 { text-align: center; color: var(--primary); margin-top: 0; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: 600; font-size: 14px; }
+        input, select { width: 100%; padding: 12px; border: 1px solid #dadce0; border-radius: 8px; font-size: 16px; box-sizing: border-box; }
+        button { width: 100%; padding: 14px; background: var(--primary); color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; margin-top: 10px; }
+        button:disabled { background: #ccc; cursor: not-allowed; }
+        #status { text-align: center; margin-top: 15px; font-size: 14px; min-height: 20px; font-weight: 500; }
+        #resultado { display: none; margin-top: 20px; border-top: 2px solid #eee; padding-top: 20px; animation: fadeIn 0.3s ease; }
+        .card { background: #f1f3f4; padding: 15px; border-radius: 8px; margin-bottom: 10px; }
+        .row { display: flex; justify-content: space-between; margin-bottom: 8px; border-bottom: 1px solid #e0e0e0; padding-bottom: 4px; font-size: 14px; }
+        .row b { color: #5f6368; font-size: 11px; text-transform: uppercase; }
+        .motivo { background: #fff3cd; padding: 10px; border-radius: 6px; border-left: 4px solid #ffc107; font-size: 14px; margin-top: 10px; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .erro { color: #d93025; }
+        .sucesso { color: #188038; }
+    </style>
+</head>
+<body>
 
-    // 1. Carrega as abas e já tenta baixar o primeiro mês da lista
+<div class="container">
+    <h2>Consulta de Alunos</h2>
+    
+    <div class="form-group">
+        <label>Mês de Referência:</label>
+        <select id="selectMes" onchange="carregarDadosDoMes()">
+            <option value="">Carregando meses...</option>
+        </select>
+    </div>
+
+    <div class="form-group">
+        <label>Número da Conta:</label>
+        <input type="text" id="inputConta" placeholder="Opcional" autocomplete="off">
+    </div>
+
+    <div class="form-group">
+        <label>CPF do Aluno:</label>
+        <input type="text" id="inputCPF" placeholder="000.000.000-00" maxlength="14" autocomplete="off">
+    </div>
+
+    <button id="btnPesquisar" onclick="realizarConsulta()" disabled>PESQUISAR</button>
+    
+    <div id="status"></div>
+
+    <div id="resultado">
+        <div class="card">
+            <div class="row"><b>Aluno</b> <span id="resAluno"></span></div>
+            <div class="row"><b>Matrícula</b> <span id="resMatricula"></span></div>
+            <div class="row"><b>Unidade</b> <span id="resUnidade"></span></div>
+            <div class="row"><b>Status</b> <span id="resStatus"></span></div>
+        </div>
+        <div class="row"><b>Etapa</b> <span id="resEtapa"></span></div>
+        <div class="row"><b>Turma</b> <span id="resTurma"></span></div>
+        <div class="row"><b>Faltas</b> <span id="resFaltas"></span></div>
+        <div class="row"><b>CPF</b> <span id="resCPF"></span></div>
+        <div class="motivo"><b>Motivo/Observação:</b><br><span id="resMotivo"></span></div>
+    </div>
+</div>
+
+<script>
+    // --- INSIRA SEU LINK ABAIXO ---
+    const URL_API = 'https://script.google.com/macros/s/AKfycbxqZhZ15KIsX3sHcflDZrFHabsa-Jk2aWKkTSeOzdNiq0a5G7sYxVcSiUuh98oqOOdq/exec';
+    
+    let dadosCache = [];
+
+    // Carrega as abas assim que abre o site
     async function iniciar() {
         const select = document.getElementById('selectMes');
+        const status = document.getElementById('status');
         try {
             const res = await fetch(`${URL_API}?getTabs=true`, { method: 'GET', redirect: 'follow' });
             const abas = await res.json();
             select.innerHTML = abas.map(n => `<option value="${n}">${n}</option>`).join('');
             document.getElementById('btnPesquisar').disabled = false;
-            
-            // Pré-carrega o primeiro mês da lista automaticamente
-            carregarDadosDoMes(select.value);
-        } catch (e) { console.error("Erro ao iniciar"); }
+            carregarDadosDoMes(); // Pré-carrega o primeiro mês
+        } catch (e) {
+            status.innerHTML = '<span class="erro">Erro ao conectar com o servidor.</span>';
+        }
     }
 
-    // 2. Sempre que mudar o mês, ele já baixa os dados na hora
-    async function carregarDadosDoMes(mes) {
-        console.log("Pré-carregando: " + mes);
+    // Baixa os dados do mês selecionado para busca instantânea
+    async function carregarDadosDoMes() {
+        const mes = document.getElementById('selectMes').value;
+        const status = document.getElementById('status');
+        const btn = document.getElementById('btnPesquisar');
+        
+        btn.disabled = true;
+        status.innerHTML = `<span>⏳ Sincronizando ${mes}...</span>`;
+        dadosCache = [];
+
         try {
             const res = await fetch(`${URL_API}?mes=${encodeURIComponent(mes)}`, { method: 'GET', redirect: 'follow' });
-            dadosDoMesAtual = await res.json();
-            console.log("Dados prontos para busca instantânea!");
-        } catch (e) { console.error("Erro no pré-carregamento"); }
+            dadosCache = await res.json();
+            status.innerHTML = '<span class="sucesso">✅ Pronto para consulta!</span>';
+            btn.disabled = false;
+        } catch (e) {
+            status.innerHTML = '<span class="erro">Erro ao carregar dados.</span>';
+        }
     }
 
-    // Escuta a mudança do seletor de mês
-    document.getElementById('selectMes').addEventListener('change', (e) => {
-        dadosDoMesAtual = []; // Limpa o anterior
-        carregarDadosDoMes(e.target.value);
-    });
-
-    // 3. A pesquisa agora é 100% local e instantânea
     function realizarConsulta() {
         const conta = document.getElementById('inputConta').value.trim();
         const cpf = document.getElementById('inputCPF').value.trim().replace(/\D/g, '');
-        const box = document.getElementById('resultado');
         const status = document.getElementById('status');
+        const box = document.getElementById('resultado');
 
-        box.style.display = 'none';
-
-        if (dadosDoMesAtual.length === 0) {
-            status.innerHTML = '<span>⏳ Sincronizando com a planilha... tente em 2 segundos.</span>';
+        if (!conta && !cpf) {
+            status.innerHTML = '<span class="erro">Digite Conta ou CPF!</span>';
             return;
         }
 
-        const aluno = dadosDoMesAtual.find(a => {
-            const vConta = String(a["CONTA"]).trim();
-            const vCPF = String(a["CPF"]).replace(/\D/g, '');
+        const aluno = dadosCache.find(a => {
+            const vConta = String(a["CONTA"] || "").trim();
+            const vCPF = String(a["CPF"] || "").replace(/\D/g, '');
             return (conta && vConta === conta) || (cpf && vCPF === cpf);
         });
 
         if (aluno) {
-            // Preenchimento (igual ao anterior)
-            document.getElementById('resMatricula').innerText = aluno["MATRÍCULA"] || "-";
             document.getElementById('resAluno').innerText = aluno["ALUNO"] || "-";
-            document.getElementById('resStatus').innerText = aluno["STATUS"] || "-";
+            document.getElementById('resMatricula').innerText = aluno["MATRÍCULA"] || "-";
             document.getElementById('resUnidade').innerText = aluno["UNIDADE"] || "-";
+            document.getElementById('resStatus').innerText = aluno["STATUS"] || "-";
             document.getElementById('resEtapa').innerText = aluno["ETAPA"] || "-";
             document.getElementById('resTurma').innerText = aluno["TURMA"] || "-";
             document.getElementById('resFaltas').innerText = aluno["faltas"] || "0";
             document.getElementById('resMotivo').innerText = aluno["MOTIVO"] || "Sem observações.";
-            document.getElementById('resCPF').innerText = `***.***.${String(aluno["CPF"]).replace(/\D/g, '').substring(6,9)}-**`;
+            
+            const cpfL = String(aluno["CPF"]).replace(/\D/g, '');
+            document.getElementById('resCPF').innerText = `***.***.${cpfL.substring(6,9)}-**`;
             
             box.style.display = 'block';
-            status.innerHTML = '<span style="color:green">✅ Localizado!</span>';
+            status.innerHTML = '<span class="sucesso">✅ Localizado!</span>';
         } else {
-            status.innerHTML = '<span style="color:red">⚠️ Não encontrado.</span>';
+            box.style.display = 'none';
+            status.innerHTML = '<span class="erro">⚠️ Registro não encontrado neste mês.</span>';
         }
     }
 
+    // Máscara de CPF automática
+    document.getElementById('inputCPF').addEventListener('input', function (e) {
+        let x = e.target.value.replace(/\D/g, '').match(/(\d{0,3})(\d{0,3})(\d{0,3})(\d{0,2})/);
+        e.target.value = !x[2] ? x[1] : x[1] + '.' + x[2] + (x[3] ? '.' + x[3] : '') + (x[4] ? '-' + x[4] : '');
+    });
+
     iniciar();
 </script>
+
+</body>
+</html>
