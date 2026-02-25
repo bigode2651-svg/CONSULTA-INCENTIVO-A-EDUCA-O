@@ -3,76 +3,157 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Portal de Consulta Dinâmico</title>
+    <title>Portal de Consulta - Incentivo à Educação</title>
     <style>
-        body { font-family: 'Segoe UI', Arial, sans-serif; background-color: #f0f2f5; display: flex; justify-content: center; padding: 20px; }
-        .container { background: white; width: 100%; max-width: 450px; padding: 25px; border-radius: 12px; box-shadow: 0 8px 20px rgba(0,0,0,0.1); }
-        h2 { text-align: center; color: #1a73e8; margin-bottom: 20px; }
-        .form-group { margin-bottom: 15px; }
-        label { display: block; margin-bottom: 5px; font-weight: bold; color: #444; font-size: 14px; }
-        input, select { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; font-size: 16px; }
-        button { width: 100%; padding: 15px; background-color: #1a73e8; color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; margin-top: 10px; }
+        :root {
+            --primary-color: #1a73e8;
+            --error-color: #d93025;
+            --success-color: #188038;
+            --bg-color: #f8f9fa;
+        }
+
+        body { 
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; 
+            background-color: var(--bg-color); 
+            display: flex; 
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container { 
+            background: white; 
+            width: 100%; 
+            max-width: 480px; 
+            padding: 30px; 
+            border-radius: 16px; 
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08); 
+            box-sizing: border-box;
+        }
+
+        h2 { text-align: center; color: var(--primary-color); margin-bottom: 25px; font-weight: 600; }
+        
+        .form-group { margin-bottom: 20px; }
+        label { display: block; margin-bottom: 8px; font-weight: 500; color: #3c4043; font-size: 14px; }
+        
+        input, select { 
+            width: 100%; 
+            padding: 12px 15px; 
+            border: 1px solid #dadce0; 
+            border-radius: 8px; 
+            box-sizing: border-box; 
+            font-size: 16px;
+            transition: border-color 0.2s;
+        }
+
+        input:focus { border-color: var(--primary-color); outline: none; box-shadow: 0 0 0 2px rgba(26,115,232,0.2); }
+        
+        button { 
+            width: 100%; 
+            padding: 14px; 
+            background-color: var(--primary-color); 
+            color: white; 
+            border: none; 
+            border-radius: 8px; 
+            font-size: 16px; 
+            font-weight: bold; 
+            cursor: pointer; 
+            transition: background 0.2s;
+            margin-top: 10px;
+        }
+
+        button:hover { background-color: #1557b0; }
         button:disabled { background-color: #ccc; cursor: not-allowed; }
-        #resultado { margin-top: 25px; display: none; border-top: 2px solid #eee; padding-top: 20px; }
-        .info-row { margin-bottom: 8px; font-size: 14px; border-bottom: 1px solid #f9f9f9; padding-bottom: 4px; }
-        .info-row b { color: #555; text-transform: uppercase; width: 100px; display: inline-block; }
-        .status-msg { text-align: center; margin-top: 15px; font-size: 14px; font-weight: bold; }
-        .erro { color: #d93025; }
-        .motivo-box { background: #fff3cd; padding: 10px; border-radius: 5px; border-left: 4px solid #ffc107; margin-top: 10px; }
+
+        #resultado { 
+            margin-top: 30px; 
+            display: none; 
+            border-top: 2px solid #f1f3f4; 
+            padding-top: 20px; 
+            animation: fadeIn 0.4s ease;
+        }
+
+        .info-card { background: #f1f3f4; padding: 15px; border-radius: 8px; margin-bottom: 15px; }
+        .info-row { margin-bottom: 10px; font-size: 14px; display: flex; justify-content: space-between; border-bottom: 1px solid #e0e0e0; padding-bottom: 5px; }
+        .info-row b { color: #5f6368; text-transform: uppercase; font-size: 12px; }
+        .info-row span { color: #202124; font-weight: 500; text-align: right; }
+
+        .motivo-box { background: #fff4e5; border-left: 4px solid #ffa000; padding: 12px; border-radius: 4px; margin-top: 15px; }
+        .motivo-box b { color: #b06000; font-size: 12px; display: block; margin-bottom: 5px; }
+
+        .status-msg { text-align: center; margin-top: 20px; font-size: 14px; min-height: 20px; }
+        .erro { color: var(--error-color); }
+        .success { color: var(--success-color); }
+
+        footer { margin-top: auto; padding: 20px; color: #70757a; font-size: 12px; text-align: center; max-width: 400px; }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h2>Consulta de Alunos</h2>
+    <h2>Consulta de Incentivo</h2>
     
     <div class="form-group">
-        <label>Selecione o Período Disponível:</label>
+        <label for="selectMes">Período Letivo:</label>
         <select id="selectMes">
             <option value="">Carregando períodos...</option>
         </select>
     </div>
 
     <div class="form-group">
-        <label>Conta:</label>
-        <input type="text" id="inputConta" placeholder="Opcional">
+        <label for="inputConta">Número da Conta:</label>
+        <input type="text" id="inputConta" placeholder="Ex: 12345" autocomplete="off">
     </div>
     
     <div class="form-group">
-        <label>CPF:</label>
-        <input type="text" id="inputCPF" placeholder="Opcional">
+        <label for="inputCPF">CPF do Aluno:</label>
+        <input type="text" id="inputCPF" placeholder="000.000.000-00" maxlength="14" autocomplete="off">
     </div>
     
-    <button id="btnPesquisar" onclick="realizarConsulta()" disabled>PESQUISAR</button>
+    <button id="btnPesquisar" onclick="realizarConsulta()" disabled>CONSULTAR AGORA</button>
     
     <div id="status" class="status-msg"></div>
 
     <div id="resultado">
-        <div class="info-row"><b>Matrícula:</b> <span id="resMatricula"></span></div>
-        <div class="info-row"><b>Aluno:</b> <span id="resAluno"></span></div>
-        <div class="info-row"><b>Conta:</b> <span id="resConta"></span></div>
-        <div class="info-row"><b>CPF:</b> <span id="resCPF"></span></div>
-        <div class="info-row"><b>Etapa:</b> <span id="resEtapa"></span></div>
-        <div class="info-row"><b>Turma:</b> <span id="resTurma"></span></div>
-        <div class="info-row"><b>Faltas:</b> <span id="resFaltas"></span></div>
-        <div class="info-row"><b>Status:</b> <span id="resStatus"></span></div>
-        <div class="info-row"><b>Unidade:</b> <span id="resUnidade"></span></div>
-        <div class="motivo-box"><b>Motivo:</b> <br><span id="resMotivo"></span></div>
+        <div class="info-card">
+            <div class="info-row"><b>Matrícula</b> <span id="resMatricula"></span></div>
+            <div class="info-row"><b>Aluno</b> <span id="resAluno"></span></div>
+            <div class="info-row"><b>Status</b> <span id="resStatus"></span></div>
+            <div class="info-row"><b>Unidade</b> <span id="resUnidade"></span></div>
+        </div>
+
+        <div class="info-row"><b>Etapa</b> <span id="resEtapa"></span></div>
+        <div class="info-row"><b>Turma</b> <span id="resTurma"></span></div>
+        <div class="info-row"><b>Faltas</b> <span id="resFaltas"></span></div>
+        <div class="info-row"><b>CPF Registrado</b> <span id="resCPF"></span></div>
+        
+        <div class="motivo-box">
+            <b>OBSERVAÇÃO / MOTIVO:</b>
+            <span id="resMotivo"></span>
+        </div>
     </div>
 </div>
 
-<script>
-    const URL_API = 'https://script.google.com/macros/s/AKfycbxqZhZ15KIsX3sHcflDZrFHabsa-Jk2aWKkTSeOzdNiq0a5G7sYxVcSiUuh98oqOOdq/exec';
-    const cacheDados = {};
+<footer>
+    Este portal segue as diretrizes da LGPD. Os dados consultados são protegidos e não ficam armazenados neste dispositivo.
+</footer>
 
-    // 1. FUNÇÃO PARA CARREGAR AS ABAS EXISTENTES NA PLANILHA
+<script>
+    // URL DA SUA API (WEB APP GOOGLE)
+    const URL_API = 'https://script.google.com/macros/s/AKfycbxqZhZ15KIsX3sHcflDZrFHabsa-Jk2aWKkTSeOzdNiq0a5G7sYxVcSiUuh98oqOOdq/exec';
+
+    // Carregar abas disponíveis ao iniciar
     async function carregarAbas() {
         const select = document.getElementById('selectMes');
         try {
             const response = await fetch(`${URL_API}?getTabs=true`, { method: 'GET', redirect: 'follow' });
             const abas = await response.json();
             
-            select.innerHTML = ''; // Limpa o "Carregando..."
+            select.innerHTML = '';
             abas.forEach(nome => {
                 let opt = document.createElement('option');
                 opt.value = nome;
@@ -81,72 +162,76 @@
             });
             document.getElementById('btnPesquisar').disabled = false;
         } catch (error) {
-            select.innerHTML = '<option>Erro ao carregar abas</option>';
-            console.error(error);
+            select.innerHTML = '<option>Erro ao carregar períodos</option>';
         }
+    }
+
+    // Função para mascarar o CPF (Exibe apenas o final para segurança)
+    function mascararCPF(cpf) {
+        if (!cpf) return "-";
+        const limpo = String(cpf).replace(/\D/g, '');
+        if (limpo.length < 11) return cpf;
+        return `***.***.${limpo.substring(6, 9)}-${limpo.substring(9, 11)}`;
     }
 
     async function realizarConsulta() {
         const mes = document.getElementById('selectMes').value;
-        const contaBusca = document.getElementById('inputConta').value.trim();
-        const cpfBusca = document.getElementById('inputCPF').value.trim();
+        const conta = document.getElementById('inputConta').value.trim();
+        const cpf = document.getElementById('inputCPF').value.trim();
         const status = document.getElementById('status');
-        const boxResultado = document.getElementById('resultado');
+        const box = document.getElementById('resultado');
 
-        boxResultado.style.display = 'none';
+        box.style.display = 'none';
         
-        if (!contaBusca && !cpfBusca) {
-            status.innerHTML = '<span class="erro">Informe Conta ou CPF.</span>';
+        if (!conta && !cpf) {
+            status.innerHTML = '<span class="erro">Por favor, informe a Conta ou o CPF.</span>';
             return;
         }
 
-        let dados;
+        status.innerHTML = '<span>⏳ Verificando dados com segurança...</span>';
 
-        if (cacheDados[mes]) {
-            dados = cacheDados[mes];
-        } else {
-            status.innerHTML = '<span>⏳ Buscando dados de ' + mes + '...</span>';
-            try {
-                const response = await fetch(`${URL_API}?mes=${mes}`, { method: 'GET', redirect: 'follow' });
-                dados = await response.json();
-                if (dados.erro) {
-                    status.innerHTML = `<span class="erro">${dados.erro}</span>`;
-                    return;
-                }
-                cacheDados[mes] = dados;
-            } catch (error) {
-                status.innerHTML = '<span class="erro">Erro na conexão.</span>';
-                return;
+        try {
+            // Chamada segura enviando os filtros para o servidor
+            const query = `?mes=${encodeURIComponent(mes)}&conta=${encodeURIComponent(conta)}&cpf=${encodeURIComponent(cpf)}`;
+            const response = await fetch(URL_API + query, { method: 'GET', redirect: 'follow' });
+            const resultado = await response.json();
+
+            if (resultado.erro) {
+                status.innerHTML = `<span class="erro">⚠️ ${resultado.erro}</span>`;
+            } else {
+                // Preenchimento dos dados
+                document.getElementById('resMatricula').innerText = resultado["MATRÍCULA"] || "-";
+                document.getElementById('resAluno').innerText = resultado["ALUNO"] || "-";
+                document.getElementById('resStatus').innerText = resultado["STATUS"] || "-";
+                document.getElementById('resUnidade').innerText = resultado["UNIDADE"] || "-";
+                document.getElementById('resEtapa').innerText = resultado["ETAPA"] || "-";
+                document.getElementById('resTurma').innerText = resultado["TURMA"] || "-";
+                document.getElementById('resFaltas').innerText = resultado["faltas"] || "0";
+                document.getElementById('resMotivo').innerText = resultado["MOTIVO"] || "Sem observações para este período.";
+                
+                // Exibe o CPF mascarado para proteger a identidade
+                document.getElementById('resCPF').innerText = mascararCPF(resultado["CPF"]);
+
+                box.style.display = 'block';
+                status.innerHTML = '<span class="success">✅ Consulta realizada com sucesso!</span>';
             }
-        }
-
-        const aluno = dados.find(a => {
-            const matchConta = contaBusca && String(a["CONTA"]).includes(contaBusca);
-            const matchCPF = cpfBusca && String(a["CPF"]).replace(/\D/g, '').includes(cpfBusca.replace(/\D/g, ''));
-            return matchConta || matchCPF;
-        });
-
-        if (aluno) {
-            document.getElementById('resMatricula').innerText = aluno["MATRÍCULA"] || "-";
-            document.getElementById('resAluno').innerText = aluno["ALUNO"] || "-";
-            document.getElementById('resConta').innerText = aluno["CONTA"] || "-";
-            document.getElementById('resCPF').innerText = aluno["CPF"] || "-";
-            document.getElementById('resEtapa').innerText = aluno["ETAPA"] || "-";
-            document.getElementById('resTurma').innerText = aluno["TURMA"] || "-";
-            document.getElementById('resFaltas').innerText = aluno["faltas"] || "0";
-            document.getElementById('resStatus').innerText = aluno["STATUS"] || "-";
-            document.getElementById('resUnidade').innerText = aluno["UNIDADE"] || "-";
-            document.getElementById('resMotivo').innerText = aluno["MOTIVO"] || "Não informado";
-
-            boxResultado.style.display = 'block';
-            status.innerHTML = '<span style="color:green">Localizado!</span>';
-        } else {
-            status.innerHTML = '<span class="erro">Nenhum registro encontrado em ' + mes + '.</span>';
+        } catch (error) {
+            status.innerHTML = '<span class="erro">❌ Erro de comunicação com o servidor.</span>';
         }
     }
 
-    // Chama a função para carregar as abas assim que a página abre
+    // Máscara de entrada para o campo CPF (opcional, para ajudar o usuário)
+    document.getElementById('inputCPF').addEventListener('input', function (e) {
+        let value = e.target.value.replace(/\D/g, '');
+        if (value.length > 11) value = value.slice(0, 11);
+        if (value.length > 9) value = value.replace(/^(\d{3})(\d{3})(\d{3})(\d{2}).*/, '$1.$2.$3-$4');
+        else if (value.length > 6) value = value.replace(/^(\d{3})(\d{3})(\d{0,3}).*/, '$1.$2.$3');
+        else if (value.length > 3) value = value.replace(/^(\d{3})(\d{0,3}).*/, '$1.$2');
+        e.target.value = value;
+    });
+
     carregarAbas();
 </script>
+
 </body>
 </html>
